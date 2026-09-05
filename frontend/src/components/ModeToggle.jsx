@@ -14,7 +14,7 @@ export default function ModeToggle({ mode, onChange }) {
     <div
       role="tablist"
       aria-label="timer mode"
-      className="relative flex w-full max-w-[27rem] items-stretch rounded-full bg-pill-track p-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]"
+      className="relative flex w-full max-w-[clamp(18rem,27vw,27rem)] items-stretch rounded-full bg-pill-track shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]"
     >
       {/* Sliding indicator */}
       <span
@@ -36,7 +36,7 @@ export default function ModeToggle({ mode, onChange }) {
             onClick={() => onChange(item.id)}
             className={[
               'relative z-10 flex-1 cursor-pointer rounded-full bg-transparent px-6 py-3',
-              'font-display text-[1.6rem] leading-none font-bold tracking-tight',
+              'font-display text-[clamp(1.05rem,1.7vw,1.6rem)] leading-none font-bold tracking-tight',
               'transition-colors duration-300',
               isActive ? 'text-black' : 'text-black/80 hover:text-black',
             ].join(' ')}

@@ -54,7 +54,9 @@ export default function TimerDisplay({ timer }) {
         aria-live="off"
         aria-label={`${timer.display} remaining in ${timer.mode} mode`}
         className={[
-          'font-display text-[6.5rem] leading-none font-bold tracking-[-0.02em] text-black',
+          // Clamped so the digits never overflow the centre column on
+          // narrower windows; caps at the intended 6.5rem on wide screens.
+          'font-display text-[clamp(3rem,7.5vw,6.5rem)] leading-none font-bold tracking-[-0.02em] text-black',
           'tabular-nums transition-opacity duration-300',
           timer.finished ? 'opacity-50' : 'opacity-100',
         ].join(' ')}

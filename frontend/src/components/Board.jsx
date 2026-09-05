@@ -9,7 +9,7 @@ const NO_DRAG = { uid: null, from: null }
 function Heading({ children, className = '' }) {
   return (
     <h2
-      className={`font-display text-[2rem] leading-none font-bold tracking-tight text-black ${className}`}
+      className={`font-display text-[clamp(1.5rem,2.2vw,2rem)] leading-none font-bold tracking-tight text-black ${className}`}
     >
       {children}
     </h2>
@@ -75,7 +75,7 @@ export default function Board({ board, timer, onSignOut }) {
         <section className="flex min-h-0 flex-col">
           <div className="flex flex-col items-center">
             <ModeToggle mode={timer.mode} onChange={timer.changeMode} />
-            <div className="mt-5">
+            <div className="mt-10">
               <TimerDisplay timer={timer} />
             </div>
           </div>
