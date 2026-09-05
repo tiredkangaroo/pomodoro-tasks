@@ -18,6 +18,44 @@ const weekdayFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'long' })
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
+ * Sorts lexicographically after any real date, which parks undated tasks at
+ * the end of the list. Mirrors `noDueSentinel` in the backend.
+ */
+const NO_DUE_SENTINEL = '9999-99-99'
+
+/**
+ * Reduces a due timestamp to its comparable date portion.
+ *
+ * @param {string | undefined} due RFC 3339 timestamp from the Tasks API.
+ * @returns {string} `YYYY-MM-DD`, or the sentinel when there is no deadline.
+ */
+export function dueKey(due) {
+  const match = ISO_DATE.exec(String(due ?? ''))
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : NO_DUE_SENTINEL
+}
+
+/**
+ * Orders tasks by deadline first (soonest first, undated last), falling back
+ * to tasklist name and the user's manual ordering within a list. Deliberately
+ * identical to `sortByDue` in the backend so a locally placed card ends up
+ * exactly where the next sync would put it.
+ */
+export function compareByDue(a, b) {
+  const keyA = dueKey(a?.due)
+  const keyB = dueKey(b?.due)
+  if (keyA !== keyB) return keyA < keyB ? -1 : 1
+
+  const listA = a?.tasklistTitle ?? ''
+  const listB = b?.tasklistTitle ?? ''
+  if (listA !== listB) return listA < listB ? -1 : 1
+
+  const posA = a?.position ?? ''
+  const posB = b?.position ?? ''
+  if (posA === posB) return 0
+  return posA < posB ? -1 : 1
+}
+
+/**
  * @param {string | undefined} due RFC 3339 timestamp from the Tasks API.
  * @param {Date} [now] Injectable for testing.
  * @returns {{ label: string, iso: string, isOverdue: boolean, isSoon: boolean } | null}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { COLUMNS, canMove } from '../lib/board.js'
+import { compareByDue } from '../lib/dueDate.js'
 import { UnauthorizedError, completeTask, fetchOpenTasks } from '../lib/api.js'
 
 /** Task IDs are only unique within a tasklist, so key on both. */
@@ -40,10 +41,23 @@ function insert(columns, column, task, index) {
 }
 
 /**
+ * Index of the first card whose deadline sorts after `task`, i.e. where `task`
+ * has to go for the column to stay ordered by due date. Used for `todo`, whose
+ * initial order comes from the backend already sorted this way.
+ */
+function dueInsertIndex(list, task) {
+  const at = list.findIndex((item) => compareByDue(task, item) < 0)
+  return at === -1 ? list.length : at
+}
+
+/**
  * Owns the three-column board.
  *
  * State rules implemented here:
  *  - Only non-completed Google tasks are fetched; they land in `todo`.
+ *  - `todo` is kept ordered by due date: cards dropped there ignore the drop
+ *    position and slot in by deadline. Explicit reordering inside `todo` is
+ *    still honoured.
  *  - `todo` <-> `inProgress` is local-only and never touches the API.
  *  - Dropping into `done` immediately patches the task to `completed`; the
  *    move is optimistic and rolled back if the API call fails.
@@ -116,7 +130,9 @@ export function useBoard({ enabled, onSessionExpired }) {
       if (!detached) return
 
       const { task, from, fromIndex } = detached
-      setColumns(insert(detached.columns, to, task, index))
+      // `todo` stays sorted by deadline, so the drop position is ignored there.
+      const at = to === COLUMNS.todo ? dueInsertIndex(detached.columns[to], task) : index
+      setColumns(insert(detached.columns, to, task, at))
 
       if (to !== COLUMNS.done) return
 
