@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Frontend build output
+frontend/dist/
+
+# Go build artifacts
+backend/bin/
+backend/server
+
+# Local environment
+.env
+.env.local
+
+# OS noise
+.DS_Store

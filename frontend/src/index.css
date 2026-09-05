@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ fonts */
+/* Local font files live in /public/fonts and are served as static assets. */
+
+@font-face {
+  font-family: 'League Spartan';
+  src: url('/fonts/LeagueSpartan.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canva Sans';
+  src: url('/fonts/CanvaSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canva Sans';
+  src: url('/fonts/CanvaSans-RegularItalic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canva Sans';
+  src: url('/fonts/CanvaSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canva Sans';
+  src: url('/fonts/CanvaSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Canva Sans';
+  src: url('/fonts/CanvaSans-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------------ theme */
+
+@theme {
+  --color-cream: #ffe8c8;
+  --color-cream-deep: #f7d9ad;
+  --color-ink: #000000;
+  --color-muted: #6b625a;
+  --color-pill-track: #d4d4d4;
+
+  --font-display: 'League Spartan', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Canva Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+}
+
+/* ------------------------------------------------------------------- base */
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Links inside task descriptions. */
+  a {
+    color: inherit;
+  }
+}
+
+/* ---------------------------------------------------------------- helpers */
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility font-body {
+  font-family: var(--font-body);
+}
+
+/* Thin, unobtrusive scrollbars for the three scrollable columns. */
+@utility scroll-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 18%, transparent) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--color-ink) 15%, transparent);
+    border-radius: 9999px;
+  }
+}
+
+/* The card being dragged: lifted slightly and faded. */
+@utility card-dragging {
+  opacity: 0.45;
+  transform: scale(0.98) rotate(-0.5deg);
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility animate-card-enter {
+  animation: card-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-section-enter {
+  animation: section-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
