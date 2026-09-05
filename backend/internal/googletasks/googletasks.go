@@ -40,8 +40,8 @@ func New(ctx context.Context, httpClient *http.Client) (*Client, error) {
 }
 
 // ListOpenTasks returns every non-completed task across all of the user's
-// tasklists. Completed tasks are never requested, which keeps the "done"
-// column scoped to the current session as required.
+// tasklists, ordered by deadline. Completed tasks are never requested, which
+// keeps the "done" column scoped to the current session as required.
 func (c *Client) ListOpenTasks(ctx context.Context) ([]Task, error) {
 	lists, err := c.allTasklists(ctx)
 	if err != nil {
@@ -57,15 +57,39 @@ func (c *Client) ListOpenTasks(ctx context.Context) ([]Task, error) {
 		out = append(out, listTasks...)
 	}
 
-	// Stable ordering: group by tasklist, then respect the user's manual
-	// ordering inside each list.
-	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].TasklistTitle != out[j].TasklistTitle {
-			return out[i].TasklistTitle < out[j].TasklistTitle
-		}
-		return out[i].Position < out[j].Position
-	})
+	sortByDue(out)
 	return out, nil
+}
+
+// noDueSentinel sorts lexicographically after any real RFC 3339 date, which
+// parks undated tasks at the end of the list.
+const noDueSentinel = "9999-99-99"
+
+// dueKey reduces a due timestamp to its date portion. Google Tasks deadlines
+// are date-only (the time is always midnight UTC), so comparing the first ten
+// characters is both correct and timezone-safe.
+func dueKey(due string) string {
+	if len(due) < 10 {
+		return noDueSentinel
+	}
+	return due[:10]
+}
+
+// sortByDue orders tasks by deadline first (soonest first, undated last),
+// falling back to tasklist name and the user's manual ordering within a list
+// so the result is stable and predictable.
+func sortByDue(tasks []Task) {
+	sort.SliceStable(tasks, func(i, j int) bool {
+		a, b := tasks[i], tasks[j]
+
+		if keyA, keyB := dueKey(a.Due), dueKey(b.Due); keyA != keyB {
+			return keyA < keyB
+		}
+		if a.TasklistTitle != b.TasklistTitle {
+			return a.TasklistTitle < b.TasklistTitle
+		}
+		return a.Position < b.Position
+	})
 }
 
 func (c *Client) allTasklists(ctx context.Context) ([]*tasksapi.TaskList, error) {

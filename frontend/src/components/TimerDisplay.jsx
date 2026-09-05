@@ -1,3 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
+import { DURATION_INPUT_PATTERN, formatDuration, parseDurationInput } from '../lib/duration.js'
+
 function PlayIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-[1.15rem] w-[1.15rem] translate-x-[1px]" aria-hidden="true">
@@ -42,38 +45,109 @@ function ResetIcon() {
   )
 }
 
+const DIGIT_CLASSES =
+  'font-display text-[clamp(3rem,7.5vw,6.5rem)] leading-none font-bold tracking-[-0.02em] tabular-nums'
+
 /**
  * Large countdown display with a circular play/pause control underneath.
- * A subtle reset button appears only once the countdown has been touched.
+ *
+ * Double-clicking (or pressing Enter on) the digits turns them into an inline
+ * editor for the current mode's length. A subtle reset button appears once the
+ * countdown has been touched.
  */
 export default function TimerDisplay({ timer }) {
+  const [draft, setDraft] = useState(null)
+  const inputRef = useRef(null)
+  const isEditing = draft !== null
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.select()
+  }, [isEditing])
+
+  // Switching modes mid-edit would apply the value to the wrong timer.
+  useEffect(() => {
+    setDraft(null)
+  }, [timer.mode])
+
+  function startEditing() {
+    timer.pause()
+    setDraft(timer.display)
+  }
+
+  function commit() {
+    const seconds = parseDurationInput(draft)
+    if (seconds !== null) timer.setDuration(seconds)
+    setDraft(null)
+  }
+
+  function handleChange(event) {
+    const next = event.target.value.replace(/[^\d:]/g, '')
+    // Accept partial input ("2", "25:") so typing feels unrestricted.
+    if (DURATION_INPUT_PATTERN.test(next)) setDraft(next)
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      commit()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      setDraft(null)
+    }
+  }
+
   return (
     <div className="flex flex-col items-center">
-      <div
-        role="timer"
-        aria-live="off"
-        aria-label={`${timer.display} remaining in ${timer.mode} mode`}
-        className={[
-          // Clamped so the digits never overflow the centre column on
-          // narrower windows; caps at the intended 6.5rem on wide screens.
-          'font-display text-[clamp(3rem,7.5vw,6.5rem)] leading-none font-bold tracking-[-0.02em] text-black',
-          'tabular-nums transition-opacity duration-300',
-          timer.finished ? 'opacity-50' : 'opacity-100',
-        ].join(' ')}
-      >
-        {timer.display}
-      </div>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={commit}
+          autoFocus
+          inputMode="numeric"
+          aria-label="timer length in minutes and seconds"
+          className={[
+            DIGIT_CLASSES,
+            'w-[6ch] rounded-2xl bg-white/60 text-center text-black caret-black',
+            'outline-none ring-2 ring-ink/15 transition-shadow duration-200',
+          ].join(' ')}
+        />
+      ) : (
+        <div
+          role="timer"
+          aria-live="off"
+          tabIndex={0}
+          onDoubleClick={startEditing}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') startEditing()
+          }}
+          title="double-click to change the length"
+          aria-label={`${timer.display} remaining in ${timer.mode} mode. Press Enter to change the length.`}
+          className={[
+            DIGIT_CLASSES,
+            'cursor-text rounded-2xl px-2 text-black select-none',
+            'outline-none transition-opacity duration-300 focus-visible:ring-2 focus-visible:ring-ink/20',
+            timer.finished ? 'opacity-50' : 'opacity-100',
+          ].join(' ')}
+        >
+          {timer.display}
+        </div>
+      )}
 
       {/* The play control stays optically centred; reset floats beside it. */}
       <div className="relative mt-1 flex items-center justify-center">
         <button
           type="button"
           onClick={timer.toggle}
+          disabled={isEditing}
           aria-label={timer.running ? 'pause timer' : 'start timer'}
           className={[
-            'flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white text-black',
+            'flex h-12 w-12 items-center justify-center rounded-full bg-white text-black',
             'shadow-[0_2px_8px_rgba(120,84,40,0.14)]',
-            'transition-transform duration-200 ease-out hover:scale-105 active:scale-95',
+            'transition-transform duration-200 ease-out',
+            isEditing ? 'cursor-default opacity-40' : 'cursor-pointer hover:scale-105 active:scale-95',
           ].join(' ')}
         >
           {timer.running ? <PauseIcon /> : <PlayIcon />}
@@ -94,6 +168,21 @@ export default function TimerDisplay({ timer }) {
         >
           <ResetIcon />
         </button>
+      </div>
+
+      {/* Contextual hint: editing help, or a way back to the default length. */}
+      <div className="mt-2 flex h-4 items-center font-body text-[0.7rem] leading-none text-ink/40">
+        {isEditing ? (
+          <span>minutes : seconds · enter to save, esc to cancel</span>
+        ) : timer.isCustomDuration ? (
+          <button
+            type="button"
+            onClick={timer.restoreDefaultDuration}
+            className="cursor-pointer underline decoration-ink/20 underline-offset-2 transition-colors hover:text-ink/70"
+          >
+            restore {formatDuration(timer.defaultDuration)}
+          </button>
+        ) : null}
       </div>
     </div>
   )
