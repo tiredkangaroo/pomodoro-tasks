@@ -1,28 +1,22 @@
-import Board from './components/Board.jsx'
-import LoginScreen from './components/LoginScreen.jsx'
-import { useAuth } from './hooks/useAuth.js'
-import { useBoard } from './hooks/useBoard.js'
-import { useTimer } from './hooks/useTimer.js'
+import AppWorkspace from './AppWorkspace.jsx'
+import { RouterProvider, useRouter } from './lib/router.jsx'
+import Home from './pages/Home.jsx'
+import Privacy from './pages/Privacy.jsx'
+import Terms from './pages/Terms.jsx'
+
+function Routes() {
+  const { path } = useRouter()
+
+  if (path === '/terms' || path.startsWith('/terms/')) return <Terms />
+  if (path === '/privacy' || path.startsWith('/privacy/')) return <Privacy />
+  if (path === '/app' || path.startsWith('/app/')) return <AppWorkspace />
+  return <Home />
+}
 
 export default function App() {
-  const auth = useAuth()
-  const timer = useTimer()
-  const board = useBoard({
-    enabled: auth.status === 'signedIn',
-    onSessionExpired: auth.handleSessionExpired,
-  })
-
-  if (auth.status === 'checking') {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-cream">
-        <p className="font-display text-2xl font-bold tracking-tight text-black/30">loading…</p>
-      </main>
-    )
-  }
-
-  if (auth.status === 'signedOut') {
-    return <LoginScreen error={auth.error} />
-  }
-
-  return <Board board={board} timer={timer} onSignOut={auth.signOut} />
+  return (
+    <RouterProvider>
+      <Routes />
+    </RouterProvider>
+  )
 }

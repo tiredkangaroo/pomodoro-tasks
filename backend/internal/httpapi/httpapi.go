@@ -257,7 +257,9 @@ func (s *Server) clearSessionCookie(w http.ResponseWriter) {
 }
 
 func (s *Server) redirectToFrontend(w http.ResponseWriter, r *http.Request, rawQuery string) {
-	target := s.cfg.FrontendURL + "/"
+	// Signed-in users should land on the workspace, not the public homepage.
+	// OAuth errors come back as a query string the frontend reads at /app.
+	target := s.cfg.FrontendURL + "/app"
 	if rawQuery != "" {
 		target += "?" + rawQuery
 	}

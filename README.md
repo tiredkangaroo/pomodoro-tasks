@@ -44,7 +44,12 @@ drifts from Google.
 2. **APIs & Services → Library →** enable **Google Tasks API**.
 3. **APIs & Services → OAuth consent screen →** configure it, add the scope
    `https://www.googleapis.com/auth/tasks`, and add your Google account under
-   **Test users** while the app is in testing mode.
+   **Test users** while the app is in testing mode. The consent screen asks for
+   three URLs — all of them live in this repo:
+   - **App home page:** your verified domain, e.g. `https://app.example.com`
+     (the public homepage at `/`, never requires a login)
+   - **Application privacy policy:** `<your domain>/privacy`
+   - **Application terms of service:** `<your domain>/terms`
 4. **APIs & Services → Credentials → Create credentials → OAuth client ID →
    Web application**, then add the authorized redirect URI:
 
@@ -53,6 +58,18 @@ drifts from Google.
    ```
 
 5. Copy the client ID and secret into `backend/.env` (see below).
+
+## Pages
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Public marketing homepage — identifies the app, describes how it works, and explains the Google Tasks data request. Always visible, no login required |
+| `/app` | The workspace. If signed out you see the Google sign-in gate; otherwise the board |
+| `/privacy` | Privacy policy (link this on the OAuth consent screen) |
+| `/terms` | Terms of Service (link this on the OAuth consent screen) |
+
+After a successful sign-in the backend redirects the browser to `/app`; failed
+OAuth attempts return there too with an `?error=` message the gate renders.
 
 ## Running locally
 
@@ -102,11 +119,14 @@ frontend/
   public/fonts/                 League Spartan + Canva Sans (woff2)
   src/lib/api.js                fetch wrapper, 401 -> re-auth
   src/lib/board.js              column IDs and movement rules
+  src/lib/router.jsx            tiny History-API router (useRouter + Link)
   src/lib/linkify.js            plain-text -> text/link/email tokens
   src/hooks/useAuth.js          auth gate state
   src/hooks/useBoard.js         column state, drag moves, completion sync
   src/hooks/useTimer.js         per-mode countdown, chime, tab title
   src/components/               Board, TaskList, TaskCard, ModeToggle, …
+  src/components/               SiteHeader, SiteFooter, GoogleButton, …
+  src/pages/                    Home, Terms, Privacy (public, no login)
 ```
 
 ## API
